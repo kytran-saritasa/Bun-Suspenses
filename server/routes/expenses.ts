@@ -2,21 +2,20 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 
-type Expense = {
-  id: number;
-  title: string;
-  amount: number;
-};
-
-const fakeExpenses: Expense[] = [
-  { id: 1, title: 'AAA', amount: 50 },
-  { id: 2, title: 'BBB', amount: 60 },
-];
-
-const createPostSchema = z.object({
+const expenseSchema = z.object({
+  id: z.number().int().positive().min(1),
   title: z.string().min(3).max(100),
   amount: z.number().int().positive(),
 });
+
+const createPostSchema = expenseSchema.omit({ id: true });
+
+type Expense = Readonly<z.infer<typeof expenseSchema>>;
+
+const fakeExpenses: Expense[] = [
+  { id: 1, title: 'AAA', amount: 50 },
+  { id: 2, title: 'BBB', amount: 60 } ,
+];
 
 export const expensesRoute = new Hono()
   .get('/', c => {
@@ -44,4 +43,4 @@ export const expensesRoute = new Hono()
     }
     const deletedExpense = fakeExpenses.splice(index, 1)[0];
     return c.json({ expense: deletedExpense });
-  })
+  });
